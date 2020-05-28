@@ -1,0 +1,115 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed May 27 22:32:17 2020
+
+@author: nadab
+"""
+import random
+import math    
+import copy    
+import sys    
+
+class Particle:
+   
+   
+   
+  def error(position):
+    err = 0
+    for i in range(len(position)):
+      err += (x[i] * x[i]) - (10 * math.cos(2 * math.pi * x[i])) + 10
+    return err
+ 
+  def __init__(self, dim, minx, maxx, seed):
+    self.rnd = random.Random(seed)
+    self.position = [0.0 for i in range(dim)]
+    self.vitesse = [0.0 for i in range(dim)]
+    self.best_part_pos = [0.0 for i in range(dim)]
+
+    for i in range(dim):
+      self.position[i] = ((maxx - minx) * self.rnd.random() + minx) #compris entre maxx et minx
+      self.vitesse[i] = ((maxx - minx) * self.rnd.random() + minx)
+
+    self.error = error(self.position) 
+    self.best_part_pos = copy.copy(self.position) 
+    self.best_part_err = self.error 
+
+def Solve(max_epochs, n, dim, minx, maxx):
+  rnd = random.Random(0)
+  # creation de prticules random
+  swarm = [Particle(dim, minx, maxx, i) for i in range(n)]
+
+  best_swarm_pos = [0.0 for i in range(dim)] 
+  best_swarm_err = sys.float_info.max # swarm best
+  for i in range(n): 
+    if swarm[i].error < best_swarm_err:
+      best_swarm_err = swarm[i].error
+      best_swarm_pos = copy.copy(swarm[i].position)
+
+  epoch = 0
+  w = 0.78  # inertie
+  c1 = 1.49445 
+  c2 = 1.49445 
+
+  while epoch < max_epochs:
+   
+    if epoch % 10 == 0 and epoch > 1:
+      print("itération = " + str(epoch) + " best erreur = %.3f" % best_swarm_err)
+
+    for i in range(n): # processéder pour chaque particule
+     
+      
+      for k in range(dim):
+        r1 = rnd.random()    
+        r2 = rnd.random()
+   
+        swarm[i].vitesse[k] = ( (w * swarm[i].vitesse[k]) + (c1 * r1 * (swarm[i].best_part_pos[k] -swarm[i].position[k])) +  (c2 * r2 * (best_swarm_pos[k] - swarm[i].position[k])) )  
+
+        if swarm[i].vitesse[k] < minx:
+          swarm[i].vitesse[k] = minx
+        elif swarm[i].vitesse[k] > maxx:
+          swarm[i].vitesse[k] = maxx
+
+      # Position a l'instant t+1
+      for k in range(dim):
+        swarm[i].position[k] += swarm[i].vitesse[k]
+ 
+      #  a l'instant t+1
+      swarm[i].error = error(swarm[i].position)
+
+     
+      if swarm[i].error < swarm[i].best_part_err:
+        swarm[i].best_part_err = swarm[i].error
+        swarm[i].best_part_pos = copy.copy(swarm[i].position)
+
+    
+      if swarm[i].error < best_swarm_err:
+        best_swarm_err = swarm[i].error
+        best_swarm_pos = copy.copy(swarm[i].position)
+   
+    # pour toute particule
+    epoch += 1
+ 
+  return best_swarm_pos
+
+
+dim = 3
+print("Fonction à comme min = 0.0 à (", end="")
+for i in range(dim-1):
+  print("0, ", end="")
+print("0)")
+
+num_particles = 50
+max_epochs = 100
+
+print("nombre de Particules = " + str(num_particles))
+print("nombre Maximal d'itération   = " + str(max_epochs))
+
+best_position = Solve(max_epochs, num_particles, dim, -10.0, 10.0)
+
+print("\nGlobal best retrouvé:")
+print(best_position)
+err = error(best_position)
+print("Erreur du global best = %.6f" % err)
+
+
+
